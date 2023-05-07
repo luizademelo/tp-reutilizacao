@@ -1,11 +1,3 @@
-import java.util.HashMap;
-import java.util.Scanner;
-import java.util.Map;
-import java.io.BufferedReader;
-import java.io.InputStreamReader;
-import java.io.File;
-import static java.lang.System.exit;
-
 public class Urna {
 
     private static Election currentElection = Controller.getElection(); 
