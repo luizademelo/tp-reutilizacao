@@ -15,15 +15,23 @@ public class Controller {
   
     private static final Map<String, Voter> VoterMap = new HashMap<>();
   
-    private static Election currentElection;
+    public static Election currentElection;
   
     private static void print(String output) {
       System.out.println(output);
+    }
+
+      
+    public static void initializeElection(String electionPassword){
+        currentElection = new Election.Builder()
+        .password(electionPassword)
+        .build();
     }
     
     public static Election getElection(){
         return currentElection; 
     }
+
 
     private static String readString() {
       try {
