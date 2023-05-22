@@ -1,0 +1,3 @@
+- adicionar o padrao Decorator para eleiçoes -> Municipais | Estaduais | Presidenciais 
+- criar os arquivos da pasta view
+- adicionar suporte para eleição universitaria

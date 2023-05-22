@@ -3,31 +3,50 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.stream.Collectors;
 import java.text.DecimalFormat;
+import java.util.HashMap;
+import java.util.Scanner;
+import java.util.Map;
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
 
 public class Election {
-  private final String password;
 
-  private boolean status;
-
-  private int nullPresidentVotes;
 
   private int nullFederalDeputyVotes;
 
-  private int presidentProtestVotes;
-
   private int federalDeputyProtestVotes;
 
-  // Na prática guardaria uma hash do eleitor
-  private Map<Voter, Integer> votersPresident = new HashMap<Voter, Integer>();
 
   // Na prática guardaria uma hash do eleitor
   private Map<Voter, Integer> votersFederalDeputy = new HashMap<Voter, Integer>();
 
-  private Map<Integer, President> presidentCandidates = new HashMap<Integer, President>();
-
   private Map<String, FederalDeputy> federalDeputyCandidates = new HashMap<String, FederalDeputy>();
 
   private Map<Voter, FederalDeputy> tempFDVote = new HashMap<Voter, FederalDeputy>();
+
+  private static final BufferedReader scanner = new BufferedReader(new InputStreamReader(System.in));
+    
+  public static void print(String output) {
+    System.out.println(output);
+  }
+
+  public static String readString() {
+    try {
+      return scanner.readLine();
+    } catch (Exception e) {
+      print("\nErro na leitura de entrada, digite novamente");
+      return readString();
+    }
+  }
+
+  public static int readInt() {
+    try {
+      return Integer.parseInt(readString());
+    } catch (Exception e) {
+      print("\nErro na leitura de entrada, digite novamente");
+      return readInt();
+    }
+  }
 
   public static class Builder {
     protected String password;
@@ -48,28 +67,19 @@ public class Election {
     }
   }
 
-  protected Election(
-      String password) {
+  protected Election(String password) {
     this.password = password;
     this.status = false;
     this.nullFederalDeputyVotes = 0;
-    this.nullPresidentVotes = 0;
-    this.presidentProtestVotes = 0;
     this.federalDeputyProtestVotes = 0;
   }
 
-  private Boolean isValid(String password) {
+  protected Boolean isValid(String password) {
     return this.password.equals(password);
   }
 
   public void computeVote(Candidate candidate, Voter voter) {
-    if (candidate instanceof President) {
-      if (votersPresident.get(voter) != null && votersPresident.get(voter) >= 1)
-        throw new StopTrap("Você não pode votar mais de uma vez para presidente");
-
-      candidate.numVotes++;
-      votersPresident.put(voter, 1);
-    } else if (candidate instanceof FederalDeputy) {
+    if (candidate instanceof FederalDeputy) {
       if (votersFederalDeputy.get(voter) != null && votersFederalDeputy.get(voter) >= 2)
         throw new StopTrap("Você não pode votar mais de uma vez para deputado federal");
 
@@ -88,13 +98,7 @@ public class Election {
   };
 
   public void computeNullVote(String type, Voter voter) {
-    if (type.equals("President")) {
-      if (this.votersPresident.get(voter) != null && votersPresident.get(voter) >= 1)
-        throw new StopTrap("Você não pode votar mais de uma vez para presidente");
-
-      this.nullPresidentVotes++;
-      votersPresident.put(voter, 1);
-    } else if (type.equals("FederalDeputy")) {
+    if (type.equals("FederalDeputy")) {
       if (this.votersFederalDeputy.get(voter) != null && this.votersFederalDeputy.get(voter) >= 2)
         throw new StopTrap("Você não pode votar mais de uma vez para deputado federal");
 
@@ -107,13 +111,7 @@ public class Election {
   }
 
   public void computeProtestVote(String type, Voter voter) {
-    if (type.equals("President")) {
-      if (this.votersPresident.get(voter) != null && votersPresident.get(voter) >= 1)
-        throw new StopTrap("Você não pode votar mais de uma vez para presidente");
-
-      this.presidentProtestVotes++;
-      votersPresident.put(voter, 1);
-    } else if (type.equals("FederalDeputy")) {
+    if (type.equals("FederalDeputy")) {
       if (this.votersFederalDeputy.get(voter) != null && this.votersFederalDeputy.get(voter) >= 2)
         throw new StopTrap("Você não pode votar mais de uma vez para deputado federal");
 
@@ -143,26 +141,16 @@ public class Election {
     this.status = false;
   }
 
-  public President getPresidentByNumber(int number) {
-    return this.presidentCandidates.get(number);
-  }
-
-  public void addPresidentCandidate(President candidate, String password) {
+  // as subclasses vão sobrecarregar esse método
+  public void addCandidate(Candidate candidate, String password){
     if (!isValid(password))
-      throw new Warning("Senha inválida");
-
-    if (this.presidentCandidates.get(candidate.number) != null)
-      throw new Warning("Numero de candidato indisponível");
-
-    this.presidentCandidates.put(candidate.number, candidate);
+        throw new Warning("Senha inválida");
 
   }
 
-  public void removePresidentCandidate(President candidate, String password) {
+  public void removeCandidate(Candidate candidate, String password){
     if (!isValid(password))
       throw new Warning("Senha inválida");
-
-    this.presidentCandidates.remove(candidate.number);
   }
 
   public FederalDeputy getFederalDeputyByNumber(String state, int number) {
@@ -170,8 +158,7 @@ public class Election {
   }
 
   public void addFederalDeputyCandidate(FederalDeputy candidate, String password) {
-    if (!isValid(password))
-      throw new Warning("Senha inválida");
+
 
     if (this.federalDeputyCandidates.get(candidate.state + candidate.number) != null)
       throw new Warning("Numero de candidato indisponível");
@@ -180,8 +167,7 @@ public class Election {
   }
 
   public void removeFederalDeputyCandidate(FederalDeputy candidate, String password) {
-    if (!isValid(password))
-      throw new Warning("Senha inválida");
+
 
     this.federalDeputyCandidates.remove(candidate.state + candidate.number);
   }
@@ -201,12 +187,12 @@ public class Election {
 
     builder.append("Resultado da eleicao:\n");
 
-    int totalVotesP = presidentProtestVotes + nullPresidentVotes;
-    for (Map.Entry<Integer, President> candidateEntry : presidentCandidates.entrySet()) {
-      President candidate = candidateEntry.getValue();
-      totalVotesP += candidate.numVotes;
-      presidentRank.add(candidate);
-    }
+    // int totalVotesP = presidentProtestVotes + nullPresidentVotes;
+    // for (Map.Entry<Integer, President> candidateEntry : presidentCandidates.entrySet()) {
+    //   President candidate = candidateEntry.getValue();
+    //   totalVotesP += candidate.numVotes;
+    //   presidentRank.add(candidate);
+    // }
 
     int totalVotesFD = federalDeputyProtestVotes + nullFederalDeputyVotes;
     for (Map.Entry<String, FederalDeputy> candidateEntry : federalDeputyCandidates.entrySet()) {
@@ -224,23 +210,23 @@ public class Election {
         .collect(Collectors.toList());
 
     builder.append("  Votos presidente:\n");
-    builder.append("  Total: " + totalVotesP + "\n");
-    builder.append("  Votos nulos: " + nullPresidentVotes + " ("
-        + decimalFormater.format((double) nullPresidentVotes / (double) totalVotesFD * 100) + "%)\n");
-    builder.append("  Votos brancos: " + presidentProtestVotes + " ("
-        + decimalFormater.format((double) presidentProtestVotes / (double) totalVotesFD * 100) + "%)\n");
+    // builder.append("  Total: " + totalVotesP + "\n");
+    // builder.append("  Votos nulos: " + nullPresidentVotes + " ("
+    //     + decimalFormater.format((double) nullPresidentVotes / (double) totalVotesFD * 100) + "%)\n");
+    // builder.append("  Votos brancos: " + presidentProtestVotes + " ("
+    //     + decimalFormater.format((double) presidentProtestVotes / (double) totalVotesFD * 100) + "%)\n");
     builder.append("\tNumero - Partido - Nome  - Votos  - % dos votos totais\n");
     for (President candidate : sortedPresidentRank) {
       builder.append("\t" + candidate.number + " - " + candidate.party + " - " + candidate.name + " - "
           + candidate.numVotes + " - "
-          + decimalFormater.format((double) candidate.numVotes / (double) totalVotesP * 100)
+          //+ decimalFormater.format((double) candidate.numVotes / (double) totalVotesP * 100)
           + "%\n");
     }
 
     President electPresident = sortedPresidentRank.get(0);
     builder.append("\n\n  Presidente eleito:\n");
-    builder.append("  " + electPresident.name + " do " + electPresident.party + " com "
-        + decimalFormater.format((double) electPresident.numVotes / (double) totalVotesP * 100) + "% dos votos\n");
+    // builder.append("  " + electPresident.name + " do " + electPresident.party + " com "
+    //     + decimalFormater.format((double) electPresident.numVotes / (double) totalVotesP * 100) + "% dos votos\n");
     builder.append("\n=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=\n\n");
 
     builder.append("\n\n  Votos deputado federal:\n");

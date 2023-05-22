@@ -1,0 +1,3 @@
+usar o factory method na Eleicao
+Eleicao = Creator
+candidate = interface
